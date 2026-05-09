@@ -528,30 +528,6 @@ function _iosPendingDownload(blob,fn,isTelegram){
  reader.readAsDataURL(blob);
 }
 
-// بررسی pending download در startup (برای Safari)
-function _checkPendingDownload(){
- try{
-  const raw=localStorage.getItem('medplan_pending_dl');
-  if(!raw)return;
-  const payload=JSON.parse(raw);
-  // TTL: 10 دقیقه
-  if(Date.now()-payload.ts>600000){localStorage.removeItem('medplan_pending_dl');return}
-  const isTelegram=/Telegram/i.test(navigator.userAgent)||!!window.TelegramWebviewProxy;
-  if(isTelegram)return; // در تلگرام نباید auto-download کنه
-  localStorage.removeItem('medplan_pending_dl');
-  // تبدیل data URL به blob و دانلود
-  fetch(payload.data)
-   .then(r=>r.blob())
-   .then(blob=>{
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');a.href=url;a.download=payload.fn;
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url),3000);
-    if(typeof toast==='function')setTimeout(()=>toast('✅ فایل دانلود شد','ok'),500);
-   }).catch(()=>{});
- }catch(e){}
-}
-
 // ── Public API ──
 return{
  read,
@@ -565,6 +541,28 @@ return{
  },
 };
 })();
+
+// بررسی pending download — global (نه داخل IIFE)
+function _checkPendingDownload(){
+ try{
+  const raw=localStorage.getItem('medplan_pending_dl');
+  if(!raw)return;
+  const payload=JSON.parse(raw);
+  if(Date.now()-payload.ts>600000){localStorage.removeItem('medplan_pending_dl');return}
+  const isTelegram=/Telegram/i.test(navigator.userAgent)||!!window.TelegramWebviewProxy;
+  if(isTelegram)return;
+  localStorage.removeItem('medplan_pending_dl');
+  fetch(payload.data)
+   .then(r=>r.blob())
+   .then(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=payload.fn;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    if(typeof toast==='function')setTimeout(()=>toast('✅ فایل دانلود شد','ok'),500);
+   }).catch(()=>{});
+ }catch(e){}
+}
 
 </script>
 <!-- Font: از cache مرورگر یا سیستم -->
