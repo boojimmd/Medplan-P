@@ -1,7 +1,12 @@
-// MedPlan Pro — Service Worker
-// کش فایل اصلی برای استفاده آفلاین کامل
 const CACHE = 'medplan-v17';
-const URLS  = ['/','index.html','manifest.json','icon-192.png','icon-512.png'];
+const BASE = '/medplan-pro';
+const URLS = [
+  BASE + '/',
+  BASE + '/index.html',
+  BASE + '/manifest.json',
+  BASE + '/icon-192.png',
+  BASE + '/icon-512.png'
+];
 
 self.addEventListener('install', e=>{
   e.waitUntil(
@@ -18,7 +23,6 @@ self.addEventListener('activate', e=>{
 });
 
 self.addEventListener('fetch', e=>{
-  // فقط GET و same-origin
   if(e.request.method!=='GET')return;
   e.respondWith(
     caches.match(e.request).then(cached=>{
@@ -29,7 +33,7 @@ self.addEventListener('fetch', e=>{
           caches.open(CACHE).then(c=>c.put(e.request,clone));
         }
         return res;
-      }).catch(()=>caches.match('index.html'));
+      }).catch(()=>caches.match(BASE+'/index.html'));
     })
   );
 });
